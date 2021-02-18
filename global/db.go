@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -14,7 +15,7 @@ var DB mongo.Database
 
 func connectToDB() {
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := NewDBContext(10 * time.Second)
 	defer cancel()
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(dburi))
 	if err != nil {
@@ -30,11 +31,19 @@ func NewDBContext(t time.Duration) (context.Context, context.CancelFunc) {
 
 // ConnectToTestDB connects to a test Database
 func ConnectToTestDB() {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := NewDBContext(10 * time.Second)
 	defer cancel()
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(dburi))
 	if err != nil {
 		fmt.Println("Error connecting to db", err.Error())
 	}
 	DB = *client.Database(dbname + "_test")
+	ctx, cancel = NewDBContext(30 * time.Second)
+	defer cancel()
+	collections, _ := DB.ListCollectionNames(ctx, bson.M{})
+	for _, collection := range collections {
+		ctx, cancel = NewDBContext(30 * time.Second)
+		defer cancel()
+		DB.Collection(collection).Drop(ctx)
+	}
 }

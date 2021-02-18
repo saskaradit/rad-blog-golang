@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"net"
 	"regexp"
 	"saskara/blog-app-go/global"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc"
 )
@@ -34,19 +36,46 @@ func (authServer) Login(_ context.Context, in *proto.LoginRequest) (*proto.AuthR
 	return &proto.AuthResponse{Token: user.GetToken()}, nil
 }
 
+var server authServer
+
 func (authServer) Signup(_ context.Context, in *proto.SignupRequest) (*proto.AuthResponse, error) {
 	username, email, password := in.GetUsername(), in.GetEmail(), in.GetPassword()
 	match, _ := regexp.MatchString("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$", email)
-	if len(username) < 4 || len(username) > 20 {
-		return &proto.AuthResponse{}, errors.New("Username needs to be more than 4 and less than 20 characters")
+	if len(username) < 4 || len(username) > 20 || len(email) < 8 || len(email) > 50 || len(password) < 8 || len(password) > 50 || !match {
+		return &proto.AuthResponse{}, errors.New("Validation error")
 	}
-	if len(email) < 8 || len(email) > 50 || !match {
-		return &proto.AuthResponse{}, errors.New("email needs to be valid")
+
+	res, err := server.UsernameUsed(context.Background(), &proto.UsernameUsedRequest{Username: username})
+	if err != nil {
+		log.Fatal("Error signing up from username", err.Error())
+		return &proto.AuthResponse{}, errors.New("Something went wrong")
 	}
-	if len(password) < 8 || len(password) > 50 {
-		return &proto.AuthResponse{}, errors.New("password needs to be more than 8 characters")
+	if res.GetUsed() {
+		// log.Fatal("Usernam", err.Error())
+		return &proto.AuthResponse{}, errors.New("Username is used")
 	}
-	return &proto.AuthResponse{}, nil
+
+	res, err = server.EmailUsed(context.Background(), &proto.EmailUsedRequest{Email: email})
+	if err != nil {
+		log.Fatal("Error signing up from email", err.Error())
+		return &proto.AuthResponse{}, errors.New("Something went wrong")
+	}
+	if res.GetUsed() {
+		// log.Fatal("Email", err.Error())
+		return &proto.AuthResponse{}, errors.New("Email is used")
+	}
+
+	pass, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	newUser := global.User{ID: primitive.NewObjectID(), Username: username, Email: email, Password: string(pass)}
+
+	ctx, cancel := global.NewDBContext(5 * time.Second)
+	defer cancel()
+	_, err = global.DB.Collection("user").InsertOne(ctx, newUser)
+	if err != nil {
+		log.Println("Error inserting user to db")
+		return &proto.AuthResponse{}, errors.New("Something went wrong")
+	}
+	return &proto.AuthResponse{Token: newUser.GetToken()}, nil
 }
 
 func (authServer) UsernameUsed(_ context.Context, in *proto.UsernameUsedRequest) (*proto.UsedResponse, error) {
@@ -58,7 +87,12 @@ func (authServer) UsernameUsed(_ context.Context, in *proto.UsernameUsedRequest)
 	return &proto.UsedResponse{Used: result != global.NilUser}, nil
 }
 func (authServer) EmailUsed(_ context.Context, in *proto.EmailUsedRequest) (*proto.UsedResponse, error) {
-	return &proto.UsedResponse{}, nil
+	email := in.GetEmail()
+	ctx, cancel := global.NewDBContext(5 * time.Second)
+	defer cancel()
+	var result global.User
+	global.DB.Collection("user").FindOne(ctx, bson.M{"email": email}).Decode(&result)
+	return &proto.UsedResponse{Used: result != global.NilUser}, nil
 }
 
 func main() {
