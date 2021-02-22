@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
-	"saskara/blog-app-go/global"
-	"saskara/blog-app-go/proto"
+	"saskara/rad-blog-golang/global"
+	"saskara/rad-blog-golang/proto"
 	"testing"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -20,6 +20,8 @@ func Test_authServer_Login(t *testing.T) {
 	if err != nil {
 		t.Error("An Error Occurred ", err.Error())
 	}
+	// t.Error(res.GetToken())
+
 	_, err = server.Login(context.Background(), &proto.LoginRequest{Login: "jengjet", Password: "Jengjet"})
 	if err == nil {
 		t.Error("Error was nil")
@@ -94,4 +96,16 @@ func Test_authServer_Signup(t *testing.T) {
 	if err.Error() != "Validation error" {
 		t.Error("4. Wrong error was returned")
 	}
+}
+
+func Test_authServer_AuthUser(t *testing.T) {
+	server := authServer{}
+	res, err := server.AuthUser(context.Background(), &proto.AuthUserRequest{Token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoie1wiSURcIjpcIjYwMzM3NjA2YTg2YjNjOTVhMThkODk3NFwiLFwiVXNlcm5hbWVcIjpcInNhc2thdGVzdFwiLFwiRW1haWxcIjpcInJhZHRlc3RAcmFkLmNvbVwiLFwiUGFzc3dvcmRcIjpcIiQyYSQxMCRMYmtQUnN0UE1XcnhTT1l0U0VkRlplV0YycVhwSEsxd1hHUVVoZkg2ZzliM3hiLlFUdkdkYVwifSJ9.b0w6FHnf8oUxdvduwcu4v2F8l4tk1g9mO7OWOsZOuDI"})
+	if err != nil {
+		t.Error("there was an error")
+	}
+	if res.GetID() != "60337606a86b3c95a18d8974" || res.GetUsername() != "saskatest" || res.GetEmail() != "radtest@rad.com" {
+		t.Error("There was an error", res)
+	}
+
 }
