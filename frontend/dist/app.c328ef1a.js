@@ -4588,19 +4588,17 @@ proto.proto.AuthServicePromiseClient.prototype.authUser = function (request, met
 };
 
 module.exports = proto.proto;
-},{"grpc-web":"node_modules/grpc-web/index.js","./services_pb.js":"proto/services_pb.js"}],"app.js":[function(require,module,exports) {
+},{"grpc-web":"node_modules/grpc-web/index.js","./services_pb.js":"proto/services_pb.js"}],"views/home.js":[function(require,module,exports) {
 "use strict";
 
-var _navigo = _interopRequireDefault(require("navigo"));
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.Home = Home;
 
-var _services_grpc_web_pb = require("./proto/services_grpc_web_pb");
+var _app = require("../app");
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-console.log(_services_grpc_web_pb.AuthServiceClient);
-var router = new _navigo.default();
-var authClient = new _services_grpc_web_pb.AuthServiceClient('http://localhost:9001');
-router.on("/", function () {
+function Home() {
   document.body.innerHTML = "";
   var homediv = document.createElement('div');
   homediv.classList.add("home-div");
@@ -4612,12 +4610,12 @@ router.on("/", function () {
     var loginBtn = document.createElement('button');
     loginBtn.innerText = "Login";
     loginBtn.addEventListener('click', function () {
-      router.navigate("/login");
+      _app.router.navigate("/login");
     });
     var signupBtn = document.createElement('button');
     signupBtn.innerText = "Signup";
     signupBtn.addEventListener('click', function () {
-      router.navigate("/signup");
+      _app.router.navigate("/signup");
     });
     buttonContainer.appendChild(loginBtn);
     buttonContainer.appendChild(signupBtn);
@@ -4631,14 +4629,27 @@ router.on("/", function () {
     logoutBtn.addEventListener('click', function () {
       localStorage.setItem('user', null);
       localStorage.setItem('token', null);
-      window.location.reload;
+      Home();
     });
     homediv.appendChild(authText);
     authText.appendChild(logoutBtn);
   }
 
   document.body.appendChild(homediv);
-}).on("/login", function () {
+}
+},{"../app":"app.js"}],"views/login.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.Login = Login;
+
+var _app = require("../app");
+
+var _services_grpc_web_pb = require("../proto/services_grpc_web_pb");
+
+function Login() {
   document.body.innerHTML = "";
   var loginDiv = document.createElement('div');
   loginDiv.classList.add("auth-div");
@@ -4666,7 +4677,8 @@ router.on("/", function () {
     var req = new _services_grpc_web_pb.LoginRequest();
     req.setLogin(loginInput.value);
     req.setPassword(passwordInput.value);
-    authClient.login(req, {}, function (err, res) {
+
+    _app.authClient.login(req, {}, function (err, res) {
       if (i != 0) return;
       i++;
       if (err) return alert(err.message); // console.log(res.getToken())
@@ -4676,7 +4688,8 @@ router.on("/", function () {
       req.setToken(res.getToken());
       var j = 0;
       if (j != 0) return;
-      authClient.authUser(req, {}, function (err, res) {
+
+      _app.authClient.authUser(req, {}, function (err, res) {
         j++;
         if (err) return alert(err.message);
         var user = {
@@ -4685,12 +4698,26 @@ router.on("/", function () {
           email: res.getEmail()
         };
         localStorage.setItem('user', JSON.stringify(user));
+
+        _app.router.navigate("/");
       });
     });
-    router.navigate("/");
   });
   document.body.appendChild(loginDiv);
-}).on("/signup", function () {
+}
+},{"../app":"app.js","../proto/services_grpc_web_pb":"proto/services_grpc_web_pb.js"}],"views/signup.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.Signup = Signup;
+
+var _app = require("../app");
+
+var _services_grpc_web_pb = require("../proto/services_grpc_web_pb");
+
+function Signup() {
   document.body.innerHTML = "";
   var signUpDiv = document.createElement('div');
   signUpDiv.classList.add("auth-div");
@@ -4713,6 +4740,18 @@ router.on("/", function () {
       usernameErr.innerText = "Username can only be 20 characters long";
       return;
     }
+
+    var req = new _services_grpc_web_pb.UsernameUsedRequest();
+    req.setUsername(username);
+
+    _app.authClient.usernameUsed(req, {}, function (err, res) {
+      if (err) return alert(err.message);
+
+      if (res.getUsed()) {
+        usernameErr.innerText = "This username has already exist";
+        return;
+      }
+    });
   });
   var usernameErr = document.createElement('div');
   usernameErr.id = "user-error";
@@ -4736,6 +4775,18 @@ router.on("/", function () {
     } else if (!new RegExp("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$").test(email)) {
       emailErr.innerText = "email needs to be valid";
     }
+
+    var req = new _services_grpc_web_pb.EmailUsedRequest();
+    req.setEmail(email);
+
+    _app.authClient.emailUsed(req, {}, function (err, res) {
+      if (err) return alert(err.message);
+
+      if (res.getUsed()) {
+        emailErr.innerText = "this email already exists";
+        return;
+      }
+    });
   });
   var emailErr = document.createElement('div');
   emailErr.id = "email-error";
@@ -4773,12 +4824,14 @@ router.on("/", function () {
     req.setUsername(usernameInput.value);
     req.setEmail(emailInput.value);
     req.setPassword(passwordInput.value);
-    authClient.signup(req, [], function (err, res) {
+
+    _app.authClient.signup(req, [], function (err, res) {
       if (err) return alert(err.message);
       localStorage.setItem('token', res.getToken());
       req = new _services_grpc_web_pb.AuthUserRequest();
       req.setToken(res.getToken());
-      authClient.authUser(req, {}, function (err, res) {
+
+      _app.authClient.authUser(req, {}, function (err, res) {
         if (err) return alert(err.message);
         var user = {
           id: res.getId(),
@@ -4786,14 +4839,41 @@ router.on("/", function () {
           email: res.getEmail()
         };
         localStorage.setItem("user", JSON.stringify(user));
+
+        _app.router.navigate("/");
       });
     });
   });
   document.body.appendChild(signUpDiv);
-}).on("/about", function () {
+}
+},{"../app":"app.js","../proto/services_grpc_web_pb":"proto/services_grpc_web_pb.js"}],"app.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.authClient = exports.router = void 0;
+
+var _navigo = _interopRequireDefault(require("navigo"));
+
+var _services_grpc_web_pb = require("./proto/services_grpc_web_pb");
+
+var _home = require("./views/home");
+
+var _login = require("./views/login");
+
+var _signup = require("./views/signup");
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var router = new _navigo.default();
+exports.router = router;
+var authClient = new _services_grpc_web_pb.AuthServiceClient('http://localhost:9001');
+exports.authClient = authClient;
+router.on("/", _home.Home).on("/login", _login.Login).on("/signup", _signup.Signup).on("/about", function () {
   document.body.innerHTML = "About";
 }).resolve();
-},{"navigo":"node_modules/navigo/lib/navigo.min.js","./proto/services_grpc_web_pb":"proto/services_grpc_web_pb.js"}],"../../../../../../../usr/local/lib/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"navigo":"node_modules/navigo/lib/navigo.min.js","./proto/services_grpc_web_pb":"proto/services_grpc_web_pb.js","./views/home":"views/home.js","./views/login":"views/login.js","./views/signup":"views/signup.js"}],"../../../../../../../usr/local/lib/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -4821,7 +4901,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "51585" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "52118" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
