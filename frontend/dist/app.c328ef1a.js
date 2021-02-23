@@ -4601,11 +4601,34 @@ console.log(_services_grpc_web_pb.AuthServiceClient);
 var router = new _navigo.default();
 var authClient = new _services_grpc_web_pb.AuthServiceClient('http://localhost:9001');
 router.on("/", function () {
-  document.body.innerHTML = "Home";
+  document.body.innerHTML = "";
+  var homediv = document.createElement('div');
+  homediv.classList.add("home-div");
+  var user = localStorage.getItem('user');
+
+  if (user == "null") {
+    var buttonContainer = document.createElement('div');
+    buttonContainer.classList.add("button-container");
+    var loginBtn = document.createElement('button');
+    loginBtn.innerText = "Login";
+    loginBtn.addEventListener('click', function () {
+      router.navigate("/login");
+    });
+    var signupBtn = document.createElement('button');
+    signupBtn.innerText = "Signup";
+    signupBtn.addEventListener('click', function () {
+      router.navigate("/signup");
+    });
+    buttonContainer.appendChild(loginBtn);
+    buttonContainer.appendChild(signupBtn);
+    homediv.append(buttonContainer);
+  } else {}
+
+  document.body.appendChild(homediv);
 }).on("/login", function () {
   document.body.innerHTML = "";
   var loginDiv = document.createElement('div');
-  loginDiv.classList.add("login-div");
+  loginDiv.classList.add("auth-div");
   var loginLabel = document.createElement('h1');
   loginLabel.innerText = "Sign In";
   loginDiv.appendChild(loginLabel);
@@ -4654,6 +4677,106 @@ router.on("/", function () {
     });
   });
   document.body.appendChild(loginDiv);
+}).on("/signup", function () {
+  document.body.innerHTML = "";
+  var signUpDiv = document.createElement('div');
+  signUpDiv.classList.add("auth-div");
+  signUpDiv.innerText = "Sign Up";
+  document.body.appendChild(signUpDiv);
+  var signUpForm = document.createElement('form');
+  var usernameInput = document.createElement('input');
+  usernameInput.setAttribute("type", "text");
+  usernameInput.id = "username-input";
+  usernameInput.setAttribute("placeholder", "Input your username");
+  signUpForm.appendChild(usernameInput);
+  usernameInput.addEventListener('input', function () {
+    usernameErr.innerText = "";
+    var username = usernameInput.value;
+
+    if (username.length < 4) {
+      usernameErr.innerText = "Usename must be at least 4 characters long";
+      return;
+    } else if (username.length > 20) {
+      usernameErr.innerText = "Username can only be 20 characters long";
+      return;
+    }
+  });
+  var usernameErr = document.createElement('div');
+  usernameErr.id = "user-error";
+  usernameErr.classList.add("error");
+  signUpForm.appendChild(usernameErr);
+  var emailInput = document.createElement('input');
+  emailInput.setAttribute("type", "email");
+  emailInput.id = "email-input";
+  emailInput.setAttribute("placeholder", "Input your email");
+  signUpForm.appendChild(emailInput);
+  emailInput.addEventListener('input', function () {
+    emailErr.innerText = "";
+    var email = emailInput.value;
+
+    if (email.length < 7) {
+      emailErr.innerText = "Email must be at least 7 characters long";
+      return;
+    } else if (email.length > 35) {
+      emailErr.innerText = "email can only be 20 characters long";
+      return;
+    } else if (!new RegExp("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$").test(email)) {
+      emailErr.innerText = "email needs to be valid";
+    }
+  });
+  var emailErr = document.createElement('div');
+  emailErr.id = "email-error";
+  emailErr.classList.add("error");
+  signUpForm.appendChild(emailErr);
+  var passwordInput = document.createElement('input');
+  passwordInput.setAttribute("type", "password");
+  passwordInput.id = "password-input";
+  passwordInput.setAttribute("placeholder", "Input your password");
+  signUpForm.appendChild(passwordInput);
+  passwordInput.addEventListener('input', function () {
+    passErr.innerText = "";
+    var password = passwordInput.value;
+
+    if (password.length < 8) {
+      passwordErr.innerText = "Password must be at least 7 characters long";
+      return;
+    } else if (password.length > 50) {
+      passwordErr.innerText = "password can only be 20 characters long";
+      return;
+    }
+  });
+  var passErr = document.createElement('div');
+  passErr.id = "pass-error";
+  passErr.classList.add("error");
+  signUpForm.appendChild(passErr);
+  var signUpBtn = document.createElement("button");
+  signUpBtn.innerText = "Sign Me Up";
+  signUpDiv.appendChild(signUpForm);
+  signUpForm.appendChild(signUpBtn);
+  signUpForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (usernameInput.value == "" || emailInput.value == "" || passwordInput.value == "" || usernameErr.innerText != "" || passwordErr.innerText != "" || emailErr != "") return;
+    var req = new _services_grpc_web_pb.SignupRequest();
+    req.setUsename(usernameInput.value);
+    req.setEmail(emailInput.value);
+    req.setPassword(passwordInput.value);
+    authClient.signup(req, [], function (err, res) {
+      if (err) return alert(err);
+      localStorage.setItem('token', res.getToken());
+      req - new _services_grpc_web_pb.AuthUserRequest();
+      req.setToken(res.getToken());
+      authClient.authUser(req, {}, function (err, res) {
+        if (err) return alert(err);
+        var user = {
+          id: res.getId(),
+          username: res.getUsername(),
+          email: res.getEmail()
+        };
+        localStorage.setItem("user", JSON.stringify(user));
+      });
+    });
+  });
+  document.body.appendChild(signUpDiv);
 }).on("/about", function () {
   document.body.innerHTML = "About";
 }).resolve();
@@ -4685,7 +4808,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "58671" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "50242" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

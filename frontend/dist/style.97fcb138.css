@@ -6,7 +6,7 @@
   box-sizing: border-box;
 }
 
-.login-div {
+.auth-div {
   background: #f4f4f4;
   width: 95%;
   padding: 2rem;
@@ -15,7 +15,7 @@
   border-radius: 10px;
   text-align: center;
 }
-.login-div input {
+.auth-div input {
   padding: 5px;
   margin: 10px auto;
   border-radius: 5px;
@@ -24,11 +24,11 @@
   width: 80%;
   text-align: center;
 }
-.login-div input:focus {
+.auth-div input:focus {
   outline: none;
   border: 1px solid teal;
 }
-.login-div button {
+.auth-div button {
   display: block;
   background-color: aquamarine;
   padding: 0.5rem 1rem;
@@ -37,6 +37,30 @@
   border-radius: 5px;
   border: none;
   font-weight: bold;
+}
+.auth-div .error {
+  color: red;
+}
+
+.home-div .button-container {
+  padding: 2rem;
+  width: 90%;
+  margin: 2rem auto;
+  max-width: 500px;
+  display: flex;
+  flex-direction: row;
+  background-color: #f4f4f4;
+  border-radius: 10px;
+  justify-content: center;
+  align-items: center;
+}
+.home-div button {
+  padding: 0.5rem 1rem;
+  background: aquamarine;
+  border-radius: 5px;
+  border: none;
+  margin: 0 0.5rem;
+  cursor: pointer;
 }
 
 /*# sourceMappingURL=/style.97fcb138.css.map */
