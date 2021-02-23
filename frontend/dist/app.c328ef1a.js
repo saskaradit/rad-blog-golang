@@ -4604,9 +4604,9 @@ router.on("/", function () {
   document.body.innerHTML = "";
   var homediv = document.createElement('div');
   homediv.classList.add("home-div");
-  var user = localStorage.getItem('user');
+  var user = JSON.parse(localStorage.getItem('user'));
 
-  if (user == "null") {
+  if (user == null) {
     var buttonContainer = document.createElement('div');
     buttonContainer.classList.add("button-container");
     var loginBtn = document.createElement('button');
@@ -4622,7 +4622,20 @@ router.on("/", function () {
     buttonContainer.appendChild(loginBtn);
     buttonContainer.appendChild(signupBtn);
     homediv.append(buttonContainer);
-  } else {}
+  } else {
+    var authText = document.createElement('div');
+    authText.classList.add('auth-text');
+    authText.innerText = "You are logged in as ".concat(user.username, " and your email is ").concat(user.email);
+    var logoutBtn = document.createElement('button');
+    logoutBtn.innerText = "Logout";
+    logoutBtn.addEventListener('click', function () {
+      localStorage.setItem('user', null);
+      localStorage.setItem('token', null);
+      window.location.reload;
+    });
+    homediv.appendChild(authText);
+    authText.appendChild(logoutBtn);
+  }
 
   document.body.appendChild(homediv);
 }).on("/login", function () {
@@ -4649,7 +4662,6 @@ router.on("/", function () {
   loginForm.appendChild(submitBtn);
   loginForm.addEventListener('submit', function (e) {
     var i = 0;
-    console.log(loginInput.value, passwordInput.value);
     e.preventDefault();
     var req = new _services_grpc_web_pb.LoginRequest();
     req.setLogin(loginInput.value);
@@ -4675,6 +4687,7 @@ router.on("/", function () {
         localStorage.setItem('user', JSON.stringify(user));
       });
     });
+    router.navigate("/");
   });
   document.body.appendChild(loginDiv);
 }).on("/signup", function () {
@@ -4738,10 +4751,10 @@ router.on("/", function () {
     var password = passwordInput.value;
 
     if (password.length < 8) {
-      passwordErr.innerText = "Password must be at least 7 characters long";
+      passErr.innerText = "Password must be at least 7 characters long";
       return;
     } else if (password.length > 50) {
-      passwordErr.innerText = "password can only be 20 characters long";
+      passErr.innerText = "password can only be 20 characters long";
       return;
     }
   });
@@ -4755,18 +4768,18 @@ router.on("/", function () {
   signUpForm.appendChild(signUpBtn);
   signUpForm.addEventListener('submit', function (e) {
     e.preventDefault();
-    if (usernameInput.value == "" || emailInput.value == "" || passwordInput.value == "" || usernameErr.innerText != "" || passwordErr.innerText != "" || emailErr != "") return;
+    if (usernameInput.value == "" || emailInput.value == "" || passwordInput.value == "" || usernameErr.innerText != "" || passErr.innerText != "" || emailErr.innerText != "") return;
     var req = new _services_grpc_web_pb.SignupRequest();
-    req.setUsename(usernameInput.value);
+    req.setUsername(usernameInput.value);
     req.setEmail(emailInput.value);
     req.setPassword(passwordInput.value);
     authClient.signup(req, [], function (err, res) {
-      if (err) return alert(err);
+      if (err) return alert(err.message);
       localStorage.setItem('token', res.getToken());
-      req - new _services_grpc_web_pb.AuthUserRequest();
+      req = new _services_grpc_web_pb.AuthUserRequest();
       req.setToken(res.getToken());
       authClient.authUser(req, {}, function (err, res) {
-        if (err) return alert(err);
+        if (err) return alert(err.message);
         var user = {
           id: res.getId(),
           username: res.getUsername(),
@@ -4808,7 +4821,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "50242" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "51585" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

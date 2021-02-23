@@ -62,5 +62,23 @@
   margin: 0 0.5rem;
   cursor: pointer;
 }
+.home-div .auth-text {
+  padding: 2rem;
+  width: 90%;
+  margin: 2rem auto;
+  max-width: 500px;
+  background-color: #f4f4f4;
+  border-radius: 10px;
+}
+.home-div .auth-text button {
+  background-color: aquamarine;
+  padding: 10px;
+  border-radius: 7px;
+  border: none;
+  display: block;
+  cursor: pointer;
+  margin: 0.5rem 1rem;
+  width: 100%;
+}
 
 /*# sourceMappingURL=/style.97fcb138.css.map */

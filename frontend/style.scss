@@ -66,4 +66,23 @@
         margin: 0 .5rem;
         cursor: pointer;
     }
+    .auth-text{
+        padding: 2rem;
+        width: 90%;
+        margin: 2rem auto;
+        max-width: 500px;
+        background-color: #f4f4f4;
+        border-radius: 10px;
+
+        button{
+            background-color: aquamarine;
+            padding: 10px;
+            border-radius: 7px;
+            border: none;
+            display: block;
+            cursor: pointer;
+            margin: .5rem 1rem;
+            width: 100%;
+        }
+    }
 }

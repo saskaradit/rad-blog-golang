@@ -10,8 +10,8 @@ router
         document.body.innerHTML = ""
         const homediv = document.createElement('div')
         homediv.classList.add("home-div")
-        const user = localStorage.getItem('user')
-        if(user=="null"){
+        const user = JSON.parse(localStorage.getItem('user'))
+        if(user==null){
             const buttonContainer = document.createElement('div')
             buttonContainer.classList.add("button-container")
             const loginBtn = document.createElement('button')
@@ -28,7 +28,21 @@ router
             buttonContainer.appendChild(signupBtn)
             homediv.append(buttonContainer)
         }else{
+            const authText = document.createElement('div')
+            authText.classList.add('auth-text')
+            authText.innerText = `You are logged in as ${user.username} and your email is ${user.email}`
 
+            const logoutBtn = document.createElement('button')
+            logoutBtn.innerText = "Logout"
+
+            logoutBtn.addEventListener('click', () =>{
+                localStorage.setItem('user',null)
+                localStorage.setItem('token',null)
+                window.location.reload
+            })
+
+            homediv.appendChild(authText)
+            authText.appendChild(logoutBtn)
         }
         document.body.appendChild(homediv)
     })
@@ -63,7 +77,6 @@ router
 
         loginForm.addEventListener('submit', e => {
             let i = 0
-            console.log(loginInput.value, passwordInput.value)
             e.preventDefault()
             let req = new LoginRequest()
             req.setLogin(loginInput.value)
@@ -85,6 +98,7 @@ router
                     localStorage.setItem('user', JSON.stringify(user))
                 })
             })
+            router.navigate("/")
         })
 
         document.body.appendChild(loginDiv)
@@ -156,10 +170,10 @@ router
             passErr.innerText =""
             const password = passwordInput.value
             if (password.length < 8){
-                passwordErr.innerText = "Password must be at least 7 characters long"
+                passErr.innerText = "Password must be at least 7 characters long"
                 return
             }else if( password.length > 50){
-                passwordErr.innerText = "password can only be 20 characters long"
+                passErr.innerText = "password can only be 20 characters long"
                 return 
             }
         })
@@ -178,18 +192,18 @@ router
         signUpForm.addEventListener('submit', e => {
             e.preventDefault()
             if(usernameInput.value=="" || emailInput.value=="" || passwordInput.value=="" 
-            || usernameErr.innerText!="" || passwordErr.innerText != "" || emailErr != "" ) return
+            || usernameErr.innerText!="" || passErr.innerText != "" || emailErr.innerText != "" ) return
             let req = new SignupRequest()
-            req.setUsename(usernameInput.value)
+            req.setUsername(usernameInput.value)
             req.setEmail(emailInput.value)
             req.setPassword(passwordInput.value)
             authClient.signup(req,[], (err,res)=>{
-                if (err) return alert(err)
+                if (err) return alert(err.message)
                 localStorage.setItem('token', res.getToken())
-                req - new AuthUserRequest()
+                req = new AuthUserRequest()
                 req.setToken(res.getToken())
                 authClient.authUser(req,{},(err,res)=>{
-                    if(err) return alert(err)
+                    if(err) return alert(err.message)
                     const user = { id: res.getId(), username: res.getUsername(), email:res.getEmail()}
                     localStorage.setItem("user", JSON.stringify(user))
 
